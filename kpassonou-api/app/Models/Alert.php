@@ -10,6 +10,7 @@ class Alert extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'id',
         'camera_id',
         'lat',
         'lng',
