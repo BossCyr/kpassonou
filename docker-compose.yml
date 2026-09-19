@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Frontend - Next.js
+  frontend:
+    build:
+      context: ./kpassonou-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
+    depends_on:
+      - api
+    networks:
+      - kpassonou
+
+  # Backend API - Laravel
+  api:
+    build:
+      context: ./kpassonou-api
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DATABASE_CONNECTION=sqlite
+      - DATABASE_DATABASE=/app/database/database.sqlite
+    volumes:
+      - ./kpassonou-api/database/database.sqlite:/app/database/database.sqlite
+    networks:
+      - kpassonou
+
+  # AI Service - FastAPI
+  ai:
+    build:
+      context: ./kpassonou-ai
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - kpassonou
+
+networks:
+  kpassonou:
+    driver: bridge
