@@ -12,6 +12,7 @@ class Alert extends Model
     protected $fillable = [
         'id',
         'camera_id',
+        'source_type',
         'lat',
         'lng',
         'water_level',
@@ -20,6 +21,9 @@ class Alert extends Model
         'address',
         'confidence',
         'image_url',
+        'data_precision',
+        'metrics',
+        'totem_state',
     ];
 
     protected $casts = [
@@ -28,5 +32,7 @@ class Alert extends Model
         'lat' => 'float',
         'lng' => 'float',
         'timestamp' => 'datetime',
+        'metrics' => 'array',
+        'totem_state' => 'array',
     ];
 }

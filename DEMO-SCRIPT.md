@@ -1,92 +1,79 @@
-# Script de Démonstration - Kpassonou
-## Hackathon Ibudo 2026 - Thème Climat/Inondations
+# Script de Demonstration - Kpassonou
+## Hackathon Ibudo 2026
 
 ---
 
-## 🎯 Ordre de passage (5 minutes)
+## Ordre de passage (5 minutes)
 
 ### 1. Introduction (30 secondes)
-> "Kpassonou transforme les caméras de surveillance privées de Cotonou en stations météo virtuelles pour les inondations, via Edge AI décentralisé."
+> "Kpassonou transforme les cameras privees ET installe des Totems intelligents pour alerter Cotonou des inondations."
 
-### 2. Problème (30 secondes)
-> "Au Bénin, les inondations font chaque année des dégâts considérables. Les citoyens n'ont pas accès à des données en temps réel sur les zones inondées. Les caméras de surveillance existent, mais ne sont pas connectées entre elles."
+### 2. Le physique : Totem (1 minute)
+> "Voici notre Totem Signalétique Intelligent. Il coute $10 a fabriquer."
+> [Montrer la maquette physique]
+> "La LED verte signifie zone sure. Orange = attention. Rouge = alerte inondation."
+> [Allumer la LED -> elle change de couleur]
+> "L'ecran OLED affiche la profondeur d'eau en temps reel."
 
-### 3. Solution (1 minute)
-> "Notre solution : un réseau Waze-like de caméras. Chaque caméra分析 l'eau localement via Edge AI, envoie un payload JSON léger à notre plateforme, qui centralise les alertes pour la mairie et les secours."
+### 3. Le logique : Dashboard (2 minutes)
+> "Maintenant, je lance la simulation."
+> [Executer `python demo.py`]
 
-### 4. Démonstration Live (2 minutes)
+#### Etape 1 : Totem
+> "Le totem du carrefour Zongo detecte 45cm d'eau. La LED passe orange."
+> [Montrer le dashboard - le totem apparait sur la carte]
 
-#### Étape 1 : Montrer la carte
-> "Voici la carte de Cotonou avec nos 7 caméras connectées. Chaque point représente une caméra de surveillance privée."
+#### Etape 2 : Camera
+> "En parallele, une camera privee analyse une image via Edge AI."
+> [Montrer la difference : qualitative vs quantitative]
 
-#### Étape 2 : Simuler une alerte
-> "Je vais maintenant simuler une détection d'inondation sur la caméra du quartier Zongo."
+#### Etape 3 : Carte
+> "Sur la carte, vous voyez les deux types de nœuds :"
+> - Totems = marqueurs carres (donnees precises)
+> - Cameras = marqueurs ronds (estimation ML)
 
-*(Cliquer sur "Simuler")*
+### 4. Le maillage (30 secondes)
+> "Les totems sont nos points fixes precis. Les cameras privées sont notre reseau dense a moindre cout."
+> "1 totem = 1 carrefour. 100 cameras = toute la ville."
 
-> "Vous voyez immédiatement l'alerte apparaître en rouge sur la carte, avec le niveau d'eau détecté à 87%."
-
-#### Étape 3 : Montrer le temps réel
-> "Le dashboard se met à jour automatiquement toutes les 5 secondes. Si je clique sur 'x5 Alertes', nous simulons une crise multiple."
-
-*(Cliquer sur "x5 Alertes")*
-
-> "En quelques secondes, 5 nouvelles alertes apparaissent sur différentes zones de Cotonou."
-
-#### Étape 4 : Montrer les détails
-> "En cliquant sur un marqueur, vous voyez les détails : camera_id, adresse, niveau d'eau, confiance du modèle, et horodatage."
-
-### 5. Architecture Technique (1 minute)
-> "Notre stack :
-> - **Frontend** : Next.js avec carte Leaflet
-> - **Backend** : Laravel avec API REST
-> - **IA** : FastAPI avec mock de détection ML
-> - **Edge** : Chaque caméra a un Raspberry Pi qui analyse localement
->
-> Le payload JSON fait moins de 200 octets, idéal pour des connexions 3G au Bénin."
-
-### 6. Impact et Scalabilité (30 secondes)
-> "Scalable à toutes les villes du Bénin. Coût minimal : un Raspberry Pi par caméra. Les données sont open pour la recherche climatique."
+### 5. Impact (30 secondes)
+> "Resultat : alerte 2h avant, secours cibles, donnees pour la mairie."
+> "Cout total : $15 par camera, $10 par totem. Abonnement $5/mois."
 
 ---
 
-## 🚀 Commandes de lancement
+## Commandes de demo
 
 ```bash
-# Terminal 1 - FastAPI (IA)
-cd kpassonou-ai
-.\venv\Scripts\python.exe main.py
+# Lancer les services
+cd kpassonou-ai && python main.py
+cd kpassonou-api && php artisan serve --port=8001
+cd kpassonou-frontend && npm run dev
 
-# Terminal 2 - Laravel (API)
-cd kpassonou-api
-php artisan serve --port=8001
+# Demo guidée
+python demo.py
 
-# Terminal 3 - Next.js (Frontend)
-cd kpassonou-frontend
-npm run dev
+# Demo de charge
+python demo.py stress
 ```
 
-## 🌐 URLs
-- Dashboard : http://localhost:3000
-- API Laravel : http://localhost:8001/api/alerts
-- FastAPI : http://localhost:8000/health
+## Checklist stand
 
----
+- [ ] Totem physique sur la table
+- [ ] LED RGB fonctionnelle
+- [ ] Ecran OLED allume
+- [ ] Ordinateur avec dashboard
+- [ ] FastAPI + Laravel en cours
+- [ ] Script demo.py pret
+- [ ] Badge KPASSONOU
 
-## 💡 Questions fréquentes du jury
+## Questions du jury
 
-**Q : Comment les caméras envoient-elles les données ?**
-> "Chaque caméra a un Edge Device (Raspberry Pi) qui capture l'image, analyse le niveau d'eau localement via un modèle TFLite, et envoie un payload JSON léger à notre API."
+**Q : Totem vs Camera ?**
+> "Totem = capteur physique precis ($10). Camera = Edge AI qualitatif ($5). On combine les deux."
 
-**Q : Quelle est la précision du modèle ?**
-> "En phase de démo, nous utilisons un mock avec des valeurs aléatoires. En production, nous utiliserions un modèle YOLO ou DeepLabV3 entraîné sur des images de Cotonou."
+**Q : Pas de surveillance ?**
+> "On ne filme pas. L'image est detruite apres analyse. Seul le niveau d'eau est envoye."
 
-**Q : Comment vous financez-vous ?**
-> "Modèle freemium pour les propriétaires de caméras. Vente de données anonymisées aux mairies et ONG."
-
-**Q : Pourquoi pas un drone ?**
-> "Les caméras sont déjà installées, alimentées, et connectées. Coût marginal zéro. Les drones nécessitent une logistique lourde."
-
----
-
-*Script de démo - Kpassonou - Hackathon Ibudo 2026*
+**Q : Cout par ville ?**
+> "10 totems = $100. 100 cameras = $500. Total $600 pour couvrir Cotonou."

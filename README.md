@@ -1,232 +1,132 @@
-# 🌊 Kpassonou
+# Kpassonou
 
-> Surveillance des inondations en temps réel à Cotonou, Bénin via Edge AI décentralisé
+> Surveillance des inondations en temps reel a Cotonou via Edge AI + Totems Signalétiques
 
-[![Hackathon Ibudo 2026](https://img.shields.io/badge/Hackathon-Ibudo%202026-blue)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)]()
+## Presentation
 
----
+**Kpassonou** combine :
+1. **Totem Signalétique Intelligent** : Borne physique (Vert/Orange/Rouge) aux carrefours
+2. **Maillage Prive** : cameras privees analysees par Edge AI
+3. **Dashboard Web** : donnees temps reel pour citoyens, secours, mairies
 
-## 📋 Table des matières
-
-- [Présentation](#-présentation)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Installation](#-installation)
-- [Utilisation](#-utilisation)
-- [API Endpoints](#-api-endpoints)
-- [Structure du projet](#-structure-du-projet)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
-## 🎯 Présentation
-
-**Kpassonou** est une plateforme de surveillance des inondations qui transforme les caméras de surveillance privées (boutiques, banques) à Cotonou en stations météo virtuelles via Edge AI décentralisé.
-
-### Le problème
-- Les inondations font des dégâts considérables au Bénin chaque année
-- Les citoyens n'ont pas accès à des données en temps réel
-- Les caméras de surveillance existent mais ne sont pas connectées
-
-### La solution
-- Un réseau **Waze-like** de caméras
-- Chaque caméra analyse l'eau localement via **Edge AI**
-- Un payload JSON léger est envoyé à la plateforme
-- Centralisation des alertes pour la mairie et les secours
-
----
-
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Caméras Privée │────▶│   Edge Device    │────▶│    Laravel      │
-│  (Boutique/Bank)│     │  (RPi/ESP32)     │     │   API REST      │
-└─────────────────┘     └─────────────────┘     └────────┬────────┘
-                                                          │
-                                                          ▼
-┌─────────────────┐                            ┌─────────────────┐
-│    Next.js      │◀───────────────────────────│    PostgreSQL    │
-│   Dashboard     │         Polling 5s         │    (SQLite dev)  │
-└─────────────────┘                            └─────────────────┘
+TOTEM PUBLIC          CAMERAS PRIVEES         SERVEUR
+(Capteurs)            (Edge AI)
+  LED RGB               RPi/ESP32             Laravel API
+  OLED                                       PostgreSQL
+    |                      |                      |
+    +------ JSON 200B -----+------>           Next.js Dashboard
 ```
 
----
+## Tech Stack
 
-## 💻 Tech Stack
+| Composant | Technologie |
+|-----------|-------------|
+| Frontend | Next.js + Tailwind CSS |
+| Backend | Laravel 13 |
+| IA | FastAPI (Python) |
+| BDD | SQLite (dev) / PostgreSQL (prod) |
+| Carte | Leaflet |
+| Totem | ESP32 + LED RGB + OLED |
+| Edge | Raspberry Pi / ESP32-CAM |
 
-| Composant | Technologie | Version |
-|-----------|-------------|---------|
-| **Frontend** | Next.js + Tailwind CSS | 14.x |
-| **Backend API** | Laravel | 11.x |
-| **IA / Analyse** | FastAPI (Python) | 0.109+ |
-| **Base de données** | SQLite (dev) / PostgreSQL (prod) | - |
-| **Carte** | Leaflet | 1.9.x |
-| **Edge Device** | Raspberry Pi / ESP32-CAM | - |
-
----
-
-## 🚀 Installation
-
-### Prérequis
-
-- [Node.js](https://nodejs.org/) 18+
-- [PHP](https://php.net/) 8.1+
-- [Composer](https://getcomposer.org/)
-- [Python](https://python.org/) 3.10+
-
-### 1. Cloner le dépôt
+## Installation
 
 ```bash
-git clone https://github.com/VOTRE_USER/kpassonou.git
-cd kpassonou
+# Backend
+cd kpassonou-api && composer install && php artisan migrate --seed && php artisan serve --port=8001
+
+# FastAPI
+cd kpassonou-ai && pip install -r requirements.txt && python main.py
+
+# Frontend
+cd kpassonou-frontend && npm install && npm run dev
 ```
 
-### 2. Backend Laravel (API)
+## API Endpoints
 
-```bash
-cd kpassonou-api
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-php artisan serve --port=8001
-```
+### Laravel (8001)
 
-### 3. Service IA (FastAPI)
-
-```bash
-cd kpassonou-ai
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
-pip install -r requirements.txt
-python main.py
-```
-
-### 4. Frontend (Next.js)
-
-```bash
-cd kpassonou-frontend
-npm install
-npm run dev
-```
-
----
-
-## 📖 Utilisation
-
-1. **Démarrer les 3 services** ( voir Installation )
-2. **Ouvrir** http://localhost:3000
-3. **Simuler une alerte** : Cliquer sur "🔄 Simuler"
-4. **Mode démo** : Cliquer sur "▶️ Démo" pour des alertes automatiques
-
-### URLs des services
-
-| Service | URL | Description |
-|---------|-----|-------------|
-| Dashboard | http://localhost:3000 | Interface utilisateur |
-| API Laravel | http://localhost:8001/api | API REST |
-| FastAPI | http://localhost:8000 | Service IA |
-
----
-
-## 📡 API Endpoints
-
-### Laravel (Port 8001)
-
-| Méthode | Route | Description |
+| Methode | Route | Description |
 |---------|-------|-------------|
-| `GET` | `/api/alerts` | Liste toutes les alertes |
-| `POST` | `/api/alerts` | Crée une alerte |
-| `GET` | `/api/stats` | Statistiques |
-| `POST` | `/api/simulate` | Simule une alerte via FastAPI |
-| `POST` | `/api/simulate/multiple` | Simule X alertes |
+| GET | /api/alerts | Liste alertes (filtre source_type) |
+| POST | /api/alerts | Cree alerte |
+| GET | /api/stats | Stats totems + cameras |
+| POST | /api/simulate | Simule camera |
+| POST | /api/simulate/multiple | Simule X cameras |
+| POST | /api/simulate/totem | Simule Totem |
 
-### FastAPI (Port 8000)
+### FastAPI (8000)
 
-| Méthode | Route | Description |
+| Methode | Route | Description |
 |---------|-------|-------------|
-| `GET` | `/health` | Healthcheck |
-| `POST` | `/analyze` | Analyse une image |
+| GET | /health | Healthcheck |
+| POST | /analyze | Analyse camera ou totem |
 
----
+## Payload JSON
 
-## 📁 Structure du projet
+### Camera Privee (qualitatif)
+```json
+{
+  "camera_id": "cam-001",
+  "source_type": "camera",
+  "water_level": 0.72,
+  "status": "alert",
+  "confidence": 0.89,
+  "data_precision": "qualitative"
+}
+```
+
+### Totem Public (quantitatif)
+```json
+{
+  "camera_id": "totem-001",
+  "source_type": "totem",
+  "water_level": 0.45,
+  "status": "warning",
+  "confidence": 0.98,
+  "data_precision": "quantitative",
+  "metrics": {
+    "water_depth_cm": 45,
+    "flow_speed_ms": 1.2,
+    "rainfall_mm_h": 12.5,
+    "temperature_c": 28.3
+  },
+  "totem_state": {
+    "led_color": "orange",
+    "battery_percent": 87,
+    "signal_strength": 85
+  }
+}
+```
+
+## Demo
+
+```bash
+python demo.py           # Demo guidée Totem + Camera
+python demo.py stress    # 10 alertes en 5 secondes
+```
+
+## Maquette Totem
+
+Voir [TOTEM-PHYSIQUE.md](./TOTEM-PHYSIQUE.md)
+
+## Fichiers
 
 ```
 kpassonou/
-├── kpassonou-frontend/      # Next.js Dashboard
-│   ├── src/
-│   │   ├── app/             # Pages
-│   │   ├── components/      # Composants React
-│   │   ├── lib/             # Utilitaires
-│   │   └── types/           # Types TypeScript
-│   └── package.json
-│
-├── kpassonou-api/           # Laravel API
-│   ├── app/
-│   │   ├── Http/Controllers
-│   │   └── Models
-│   ├── database/seeders
-│   └── routes/api.php
-│
-├── kpassonou-ai/            # FastAPI Service
-│   ├── models/
-│   ├── services/
-│   └── main.py
-│
-├── CADRAGE-MVP.md           # Documentation projet
-├── DEMO-SCRIPT.md           # Script de démo
-└── docker-compose.yml       # Setup Docker
+├── kpassonou-frontend/   # Next.js Dashboard
+├── kpassonou-api/        # Laravel API
+├── kpassonou-ai/         # FastAPI IA
+├── demo.py               # Script de demo
+├── TOTEM-PHYSIQUE.md     # Plan maquette
+├── CADRAGE-MVP.md        # Documentation projet
+├── DEMO-SCRIPT.md        # Script jury
+└── docker-compose.yml    # Setup Docker
 ```
 
----
+## License
 
-## 🎬 Démonstration
-
-Voir [DEMO-SCRIPT.md](./DEMO-SCRIPT.md) pour le script de démo du hackathon.
-
----
-
-## 🛠️ Développement
-
-### Seeders
-
-```bash
-cd kpassonou-api
-php artisan migrate:fresh --seed
-```
-
-### Simulation rapide
-
-```bash
-cd kpassonou-ai
-python simulate.py
-```
-
----
-
-## 📄 License
-
-Distribué sous la licence MIT. Voir `LICENSE` pour plus d'informations.
-
----
-
-## 🙏 Auteurs
-
-- **Kpassonou Team** - Hackathon Ibudo 2026
-
----
-
-## 🔗 Liens
-
-- [Presentation (PDF)](#)
-- [Vidéo démo](#)
-- [Edge Device Script](#)
-
----
-
-*Fait avec ❤️ pour le Bénin 🇧🇯*
+MIT

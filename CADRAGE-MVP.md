@@ -1,7 +1,7 @@
 # Kpassonou — Cadrage MVP Hackathon (24h)
 
 > **Hackathon Ibudo** — Thème Climat/Inondations au Bénin
-> Objectif : MVP fonctionnel, impressionnant pour le jury, codable en 24h chrono.
+> Objectif : MVP fonctionnel avec prototype physique, impressionnant pour le jury.
 
 ---
 
@@ -9,95 +9,197 @@
 
 ### ✅ À CODER (fonctionnel)
 
-- Dashboard Next.js avec carte interactive des zones inondées
-- API Laravel qui reçoit et stocke les alertes d'inondation
-- FastAPI qui reçoit une image et retourne un niveau d'eau (Mock ML)
-- Push temps réel des alertes (WebSocket ou polling simple)
+- **Totem Signalétique Intelligent** : Maquette physique avec LED RGB + OLED
+- Dashboard Next.js avec carte interactive
+- API Laravel qui reçoit et stocke les alertes (Totems + Caméras)
+- FastAPI qui analyse images et données capteurs
+- Push temps réel des alertes (polling 5s)
 - Seeders de données réalistes (Cotonou)
 
 ### 🎭 À SIMULER / MOCK
 
-- Authentification → un token mock en header
-- Intégration multi-caméras → 2-3 caméras de démo
-- Vrai modèle ML → algorithme de détection simple ou mock
-- Gestion d'erreurs avancée
-- Base de données persistante → SQLite ou en mémoire
+- Authentification → token mock
+- Vrai modèle ML → mock avec données aléatoires
+- Vrai capteur physique → LED RGB pilotée par script
+- Base de données → SQLite
 
 ---
 
 ## 2. Contrat d'Interface — Payload JSON
 
-### FastAPI → Laravel (Détection)
+### Source Types
+
+| Type | `source_type` | `data_precision` | Source |
+|------|---------------|------------------|--------|
+| **Caméra Privée** | `camera` | `qualitative` | Edge AI sur image |
+| **Totem Public** | `totem` | `quantitative` | Capteur physique |
+
+### Caméra Privée → Laravel
 
 ```json
 {
   "camera_id": "cam-001",
-  "timestamp": "2026-09-19T14:30:00Z",
-  "location": {
-    "lat": 6.3654,
-    "lng": 2.4183,
-    "address": "Quartier Zongo, Cotonou"
-  },
+  "source_type": "camera",
+  "timestamp": "2026-09-20T10:00:00Z",
+  "location": { "lat": 6.3654, "lng": 2.4183, "address": "Quartier Zongo" },
   "water_level": 0.72,
   "status": "alert",
   "confidence": 0.89,
-  "image_url": "https://storage.example.com/cam-001/latest.jpg"
+  "data_precision": "qualitative"
 }
 ```
 
-### Laravel → Next.js (Dashboard)
+### Totem Public → Laravel
 
 ```json
 {
-  "alerts": [
-    {
-      "id": "uuid-1234",
-      "camera_id": "cam-001",
-      "lat": 6.3654,
-      "lng": 2.4183,
-      "water_level": 0.72,
-      "status": "alert",
-      "timestamp": "2026-09-19T14:30:00Z",
-      "address": "Quartier Zongo, Cotonou"
-    }
-  ],
-  "summary": {
-    "total_cameras": 3,
-    "active_alerts": 2,
-    "last_update": "2026-09-19T14:31:00Z"
+  "camera_id": "totem-001",
+  "source_type": "totem",
+  "timestamp": "2026-09-20T10:00:00Z",
+  "location": { "lat": 6.3690, "lng": 2.4100, "address": "Carrefour Zongo" },
+  "water_level": 0.45,
+  "status": "warning",
+  "confidence": 0.98,
+  "data_precision": "quantitative",
+  "metrics": {
+    "water_depth_cm": 45,
+    "flow_speed_ms": 1.2,
+    "rainfall_mm_h": 12.5,
+    "temperature_c": 28.3
+  },
+  "totem_state": {
+    "led_color": "orange",
+    "battery_percent": 87,
+    "signal_strength": 85
   }
 }
 ```
 
 ### Statuts possibles
 
-| `water_level` | `status`   |
-|---------------|------------|
-| 0.0 - 0.3    | `safe`     |
-| 0.3 - 0.6    | `warning`  |
-| 0.6 - 1.0    | `alert`    |
+| `water_level` | `status` | `led_color` |
+|---------------|----------|-------------|
+| 0.0 - 0.3 | `safe` | `green` |
+| 0.3 - 0.6 | `warning` | `orange` |
+| 0.6 - 1.0 | `alert` | `red` |
 
 ---
 
-## 3. Architecture des Dossiers Minimaliste
-
-### Next.js (`kpassonou-frontend/`)
+## 3. Architecture Physique + Logique
 
 ```
-src/
-├── app/
-│   ├── page.tsx              # Dashboard principal
-│   ├── layout.tsx
-│   └── globals.css
-├── components/
-│   ├── Map.tsx               # Carte Leaflet/Mapbox
-│   ├── AlertCard.tsx          # Carte d'alerte
-│   └── StatusBadge.tsx        # Badge coloré par statut
-├── lib/
-│   └── api.ts                 # Fetch Laravel API
-└── types/
-    └── alert.ts               # Types TypeScript
+┌─────────────────────────────────────────────────────────────────┐
+│                    KPASSONOU - ARCHITECTURE COMPLÈTE             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   PHYSIQUE                    LOGIQUE                           │
+│   ┌─────────┐                ┌─────────────┐                   │
+│   │  TOTEM  │──JSON 200B────▶│   Laravel   │                   │
+│   │ LED+OLED│                │   API REST  │                   │
+│   └─────────┘                └──────┬──────┘                   │
+│                                     │                           │
+│   ┌─────────┐                ┌──────▼──────┐                   │
+│   │CAMÉRAS  │──Edge AI──────▶│  PostgreSQL  │                   │
+│   │ RPi/ESP │                │  / SQLite   │                   │
+│   └─────────┘                └──────┬──────┘                   │
+│                                     │                           │
+│                              ┌──────▼──────┐                   │
+│                              │   Next.js   │                   │
+│                              │  Dashboard  │                   │
+│                              │   Leaflet   │                   │
+│                              └─────────────┘                   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 4. Endpoints d'API
+
+### Laravel (Port 8001)
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/api/alerts` | Liste alertes (filtre `?source_type=totem`) |
+| `POST` | `/api/alerts` | Crée alerte |
+| `GET` | `/api/stats` | Stats (total_nodes, total_totems, total_cameras) |
+| `POST` | `/api/simulate` | Simule caméra via FastAPI |
+| `POST` | `/api/simulate/multiple` | Simule X caméras |
+| `POST` | `/api/simulate/totem` | Simule Totem (direct, sans FastAPI) |
+
+### FastAPI (Port 8000)
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/health` | Healthcheck |
+| `POST` | `/analyze` | Analyse camera ou totem |
+
+---
+
+## 5. Maquette Physique Totem
+
+### Spécifications
+- **Hauteur** : 60 cm
+- **Largeur** : 15 cm
+- **Coût** : ~$5-10
+- **Matériaux** : Carton, LED RGB, OLED 0.96", Arduino/ESP32
+
+### Composants
+
+| Composant | Rôle | Prix |
+|-----------|------|------|
+| Carton double face | Structure | $0 (récup) |
+| LED RGB | Signal visuel vert/orange/rouge | $2 |
+| Écran OLED 0.96" | Affichage profondeur eau | $3 |
+| ESP32/Arduino Mini | Pilotage LED + écran | $3 |
+| Batterie USB | Alimentation | $0 (récup) |
+
+Voir [TOTEM-PHYSIQUE.md](./TOTEM-PHYSIQUE.md) pour le plan complet.
+
+---
+
+## 6. Scénario Démo (5 min)
+
+| Étape | Action | Résultat |
+|-------|--------|----------|
+| 1 | Montrer Totem physique | Jury touche la maquette |
+| 2 | Lancer `python demo.py` | Simulation démarre |
+| 3 | LED Totem change de couleur | Signal visuel fonctionne |
+| 4 | Dashboard se met à jour | Carte + alertes temps réel |
+| 5 | Expliquer Totem vs Caméra | Différence qualitative/quantitative |
+
+---
+
+## 7. Ordre de Codage Recommandé (24h)
+
+| Période | Tâche |
+|---------|-------|
+| Heure 0-2 | Setup projets + migration Totem |
+| Heure 2-4 | FastAPI : `/analyze` camera + totem |
+| Heure 4-7 | Laravel : endpoints + seeders |
+| Heure 7-12 | Next.js : Dashboard + carte |
+| Heure 12-16 | Intégration Totem → Dashboard |
+| Heure 16-20 | Maquette physique Totem |
+| Heure 20-22 | Démo + polish UI |
+| Heure 22-24 | Slide + répétition pitch |
+
+---
+
+## 8. Tech Stack
+
+| Composant | Technologie |
+|-----------|-------------|
+| Frontend | Next.js + Tailwind CSS |
+| Backend | Laravel 13 (PHP) |
+| IA | FastAPI (Python) |
+| BDD | SQLite (dev) / PostgreSQL (prod) |
+| Carte | Leaflet |
+| Totem | ESP32 + LED RGB + OLED |
+| Edge | Raspberry Pi Zero / ESP32-CAM |
+
+---
+
+*Dernière mise à jour : 20 septembre 2026*
 
 ### Laravel (`kpassonou-api/`)
 

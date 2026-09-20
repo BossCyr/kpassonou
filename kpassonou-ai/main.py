@@ -4,25 +4,29 @@ from services.detector import analyze_image
 
 app = FastAPI(
     title="Kpassonou AI Service",
-    description="Service d'analyse d'images pour la détection d'inondations",
-    version="0.1.0"
+    description="Service d'analyse pour la détection d'inondations (Caméras + Totems)",
+    version="0.2.0"
 )
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "service": "kpassonou-ai"}
+    return {"status": "healthy", "service": "kpassonou-ai", "version": "0.2.0"}
 
 
 @app.post("/analyze", response_model=DetectionResult)
 def analyze(request: AnalysisRequest):
     """
-    Analyse une image et retourne le niveau d'eau détecté.
+    Analyse une image ou données capteur et retourne le niveau d'eau détecté.
+    
+    - source_type='camera' : Analyse ML d'image (qualitatif)
+    - source_type='totem' : Données capteur physique (quantitatif)
     """
     result = analyze_image(
         camera_id=request.camera_id,
         image_url=request.image_url,
-        location=request.location
+        location=request.location,
+        source_type=request.source_type
     )
     return result
 

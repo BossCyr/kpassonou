@@ -69,6 +69,7 @@ class SimulationController extends Controller
                 $alert = \App\Models\Alert::create([
                     'id' => \Illuminate\Support\Str::uuid()->toString(),
                     'camera_id' => $detection['camera_id'],
+                    'source_type' => 'camera',
                     'lat' => $detection['location']['lat'],
                     'lng' => $detection['location']['lng'],
                     'water_level' => $detection['water_level'],
@@ -77,6 +78,7 @@ class SimulationController extends Controller
                     'address' => $detection['location']['address'],
                     'confidence' => $detection['confidence'],
                     'image_url' => $detection['image_url'] ?? null,
+                    'data_precision' => 'qualitative',
                 ]);
 
                 return response()->json([
@@ -115,6 +117,76 @@ class SimulationController extends Controller
         ]);
     }
 
+    public function simulateTotem(): JsonResponse
+    {
+        $totems = [
+            [
+                'camera_id' => 'totem-001',
+                'lat' => 6.3690,
+                'lng' => 2.4100,
+                'address' => 'Carrefour Zongo, Cotonou',
+            ],
+            [
+                'camera_id' => 'totem-002',
+                'lat' => 6.3780,
+                'lng' => 2.3950,
+                'address' => 'Carrefour Ganhi, Cotonou',
+            ],
+            [
+                'camera_id' => 'totem-003',
+                'lat' => 6.3580,
+                'lng' => 2.4350,
+                'address' => 'Carrefour Haie Vive, Cotonou',
+            ],
+        ];
+
+        $totem = $totems[array_rand($totems)];
+
+        $waterLevel = round(mt_rand(10, 95) / 100, 2);
+
+        if ($waterLevel < 0.3) {
+            $status = 'safe';
+            $ledColor = 'green';
+        } elseif ($waterLevel < 0.6) {
+            $status = 'warning';
+            $ledColor = 'orange';
+        } else {
+            $status = 'alert';
+            $ledColor = 'red';
+        }
+
+        $alert = \App\Models\Alert::create([
+            'id' => \Illuminate\Support\Str::uuid()->toString(),
+            'camera_id' => $totem['camera_id'],
+            'source_type' => 'totem',
+            'lat' => $totem['lat'],
+            'lng' => $totem['lng'],
+            'water_level' => $waterLevel,
+            'status' => $status,
+            'timestamp' => now()->toIso8601String(),
+            'address' => $totem['address'],
+            'confidence' => round(mt_rand(95, 99) / 100, 2),
+            'data_precision' => 'quantitative',
+            'metrics' => [
+                'water_depth_cm' => round($waterLevel * 100, 1),
+                'flow_speed_ms' => round(mt_rand(10, 30) / 10, 1),
+                'rainfall_mm_h' => round(mt_rand(0, 250) / 10, 1),
+                'temperature_c' => round(mt_rand(250, 320) / 10, 1),
+            ],
+            'totem_state' => [
+                'led_color' => $ledColor,
+                'battery_percent' => mt_rand(70, 100),
+                'signal_strength' => mt_rand(60, 100),
+            ],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'alert' => $alert,
+            'message' => "Totem {$totem['camera_id']} → LED {$ledColor} | Eau {$status}",
+        ]);
+    }
+
     private function simulateSingle(): array
     {
         $cameras = [
@@ -144,6 +216,7 @@ class SimulationController extends Controller
                 \App\Models\Alert::create([
                     'id' => \Illuminate\Support\Str::uuid()->toString(),
                     'camera_id' => $detection['camera_id'],
+                    'source_type' => 'camera',
                     'lat' => $detection['location']['lat'],
                     'lng' => $detection['location']['lng'],
                     'water_level' => $detection['water_level'],
@@ -152,6 +225,7 @@ class SimulationController extends Controller
                     'address' => $detection['location']['address'],
                     'confidence' => $detection['confidence'],
                     'image_url' => $detection['image_url'] ?? null,
+                    'data_precision' => 'qualitative',
                 ]);
 
                 return ['success' => true, 'camera_id' => $camera['camera_id']];

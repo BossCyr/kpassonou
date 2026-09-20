@@ -10,3 +10,4 @@ Route::get('/stats', [AlertController::class, 'stats']);
 
 Route::post('/simulate', [SimulationController::class, 'simulate']);
 Route::post('/simulate/multiple', [SimulationController::class, 'simulateMultiple']);
+Route::post('/simulate/totem', [SimulationController::class, 'simulateTotem']);
