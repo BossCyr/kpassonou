@@ -19,23 +19,34 @@
 ## Structure
 
 ```
-         ┌─────────────────┐
-         │  ☀️  TOTEM     │  ← Panneau solaire simulé (carton doré)
-         │   KPASSONOU     │
-         ├─────────────────┤
-         │   🚦 LED RGB   │  ← LED verte/orange/rouge
-         │   [  ████  ]   │  ← Mini écran OLED (profondeur eau)
-         │   💧 45 cm     │
-         │   🔋 87%       │
-         ├─────────────────┤
-         │   CARREFOUR     │  ← Adresse du carrefour
-         │    ZONGO        │
-         ├─────────────────┤
-         │                 │
-         │    (Pied)       │  ← Structure tubulaire
-         │                 │
-         └─────────────────┘
-              ▓▓▓▓▓▓▓▓       ← Base stabilisatrice
+                    ┌─────────────────┐
+                    │   ☀️ PANNEAU    │  ← Alimentation solaire (optionnel)
+                    │    SOLAIRE      │
+                    ├─────────────────┤
+                    │                 │
+                    │   📷 CAMÉRA     │  ← HAUT : vue dégagée sur la rue
+                    │   (RPi Zero)    │     angle vers le bas
+                    │                 │
+                    ├─────────────────┤
+                    │   🚦 LED RGB    │  ← MILIEU : visible par les piétons
+                    │   [  ████  ]    │     hauteur des yeux (1m50)
+                    │   📊 OLED       │
+                    ├─────────────────┤
+                    │   📡 ANTENNE    │  ← WiFi/4G (si RPi externe)
+                    │                 │
+                    ├─────────────────┤
+                    │                 │
+                    │   🔧 RASPBERRY  │  ← DANS le boîtier (protection)
+                    │      PI         │
+                    │   🔋 BATTERIE   │
+                    │                 │
+                    ├─────────────────┤
+                    │                 │
+                    │   📏 CAPTEUR    │  ← BAS : niveau d'eau au sol
+                    │   ULTRASON      │     10-20cm du sol
+                    │                 │
+                    └─────────────────┘
+                         ▓▓▓▓▓▓▓▓▓▓       ← Base fixée au sol
 ```
 
 ## Fabrication pas à pas
