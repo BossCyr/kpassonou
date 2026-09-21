@@ -85,6 +85,31 @@ export default function Home() {
     }
   };
 
+  const simulateTotem = async () => {
+    setSimulating(true);
+    try {
+      const response = await fetch('http://localhost:8001/api/simulate/totem', {
+        method: 'POST',
+      });
+      const result = await response.json();
+      if (result.success) {
+        const alert = result.alert;
+        const led = alert.totem_state?.led_color || 'unknown';
+        setLastAlert(`🚦 ${alert.camera_id} → LED ${led.toUpperCase()} | Eau ${(alert.water_level * 100).toFixed(0)}%`);
+        await fetchData();
+        setTimeout(() => setLastAlert(null), 4000);
+      } else {
+        setLastAlert(`❌ ${result.message}`);
+        setTimeout(() => setLastAlert(null), 3000);
+      }
+    } catch (err) {
+      setLastAlert('❌ Erreur simulation totem');
+      setTimeout(() => setLastAlert(null), 3000);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
   const toggleDemoMode = () => {
     if (demoMode) {
       if (demoIntervalRef.current) {
@@ -194,11 +219,18 @@ export default function Home() {
                   {demoMode ? '⏹️ Arrêter' : '▶️ Démo'}
                 </button>
                 <button
+                  onClick={simulateTotem}
+                  disabled={simulating}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {simulating ? '⏳' : '🚦'} Totem
+                </button>
+                <button
                   onClick={simulateAlert}
                   disabled={simulating}
                   className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  {simulating ? '⏳' : '🔄'} Simuler
+                  {simulating ? '⏳' : '📷'} Caméra
                 </button>
                 <button
                   onClick={simulateMultiple}
@@ -228,15 +260,43 @@ export default function Home() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
             <div className="flex items-center">
               <div className="p-3 bg-blue-100 rounded-full">
+                <span className="text-2xl">📍</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-500">Total nœuds</p>
+                <p className="text-3xl font-bold text-blue-600">
+                  {data?.summary.total_nodes || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500 hover:shadow-xl transition-shadow">
+            <div className="flex items-center">
+              <div className="p-3 bg-indigo-100 rounded-full">
+                <span className="text-2xl">🚦</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-500">Totems</p>
+                <p className="text-3xl font-bold text-indigo-600">
+                  {data?.summary.total_totems || 0}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
+            <div className="flex items-center">
+              <div className="p-3 bg-purple-100 rounded-full">
                 <span className="text-2xl">📷</span>
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-500">Caméras actives</p>
-                <p className="text-3xl font-bold text-blue-600">
+                <p className="text-sm text-gray-500">Caméras</p>
+                <p className="text-3xl font-bold text-purple-600">
                   {data?.summary.total_cameras || 0}
                 </p>
               </div>
@@ -252,20 +312,6 @@ export default function Home() {
                 <p className="text-sm text-gray-500">Alertes actives</p>
                 <p className="text-3xl font-bold text-red-600">
                   {data?.summary.active_alerts || 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
-            <div className="flex items-center">
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <span className="text-2xl">⚠️</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-500">En attention</p>
-                <p className="text-3xl font-bold text-yellow-600">
-                  {data?.alerts.filter(a => a.status === 'warning').length || 0}
                 </p>
               </div>
             </div>
@@ -291,6 +337,12 @@ export default function Home() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-800">📍 Carte des alertes</h2>
             <div className="flex items-center gap-4 text-sm">
+              <span className="flex items-center gap-1">
+                <span className="text-lg">🚦</span> Totem
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="text-lg">📷</span> Caméra
+              </span>
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 bg-red-500 rounded-full"></span> Alerte
               </span>
